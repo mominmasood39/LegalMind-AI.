@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Analysis — LegalMind-AI</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <span class="logo-icon">⚖️</span>
+      <div>
+        <div class="brand-text">LegalMind<span style="color:#fff">·AI</span></div>
+        <div class="brand-sub">Legal Intelligence</div>
+      </div>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="chat.html">Legal Q&amp;A</a></li>
+      <li><a href="analyse.html" class="active">Analyse</a></li>
+      <li><a href="research.html">Research</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-container">
+    <div class="page-header">
+      <h1>📄 Document Analysis</h1>
+      <p>Upload or paste a legal document to receive an AI-powered analysis.</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('paste', this)">📋 Paste Text</button>
+      <button class="tab-btn" onclick="switchTab('upload', this)">⬆ Upload File</button>
+    </div>
+
+    <!-- Paste tab -->
+    <div class="tab-panel active" id="tab-paste">
+      <div>
+        <label for="docText" style="font-weight:600;color:var(--navy);display:block;margin-bottom:0.4rem;">Paste document text:</label>
+        <textarea
+          id="docText"
+          class="doc-textarea"
+          placeholder="Paste the content of your legal document here (contract, agreement, lease, etc.)…"
+        ></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+        <label for="analysisType" style="font-weight:600;color:var(--navy);">Analysis type:</label>
+        <select id="analysisType" style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+          <option value="general">General</option>
+          <option value="contract">Contract</option>
+          <option value="lease">Lease / Rental</option>
+          <option value="employment">Employment Agreement</option>
+          <option value="clause">Clause-specific</option>
+        </select>
+        <button class="btn btn-primary" id="analyseTextBtn" onclick="analyseText()">🔍 Analyse Document</button>
+      </div>
+    </div>
+
+    <!-- Upload tab -->
+    <div class="tab-panel" id="tab-upload">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <span class="drop-icon">📂</span>
+        <strong>Click to upload or drag &amp; drop</strong>
+        <p class="text-muted mt-1" style="font-size:0.9rem;">Supported formats: TXT, PDF, DOCX (max 10 MB)</p>
+      </div>
+      <input type="file" id="fileInput" class="hidden" accept=".txt,.pdf,.docx" />
+      <div id="fileInfo" class="hidden mt-2" style="font-size:0.9rem;color:var(--text-muted);"></div>
+      <button class="btn btn-primary mt-2" id="uploadBtn" onclick="uploadFile()" disabled>⬆ Upload &amp; Analyse</button>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" class="hidden">
+      <div class="results-card">
+        <h3>📝 Document Summary</h3>
+        <p id="docSummary" style="color:var(--text-muted);font-size:0.95rem;line-height:1.6;"></p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:1.5rem;">
+        <div class="results-card">
+          <h3>🔑 Key Points</h3>
+          <ul class="results-list key-points" id="keyPoints"></ul>
+        </div>
+        <div class="results-card">
+          <h3>⚠️ Risk Factors</h3>
+          <ul class="results-list risk-factors" id="riskFactors"></ul>
+        </div>
+      </div>
+
+      <div class="results-card" style="margin-top:1.5rem;">
+        <h3>✅ Recommendations</h3>
+        <ul class="results-list recommendations" id="recommendations"></ul>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingSection" class="hidden text-center mt-3">
+      <span class="spinner" style="width:32px;height:32px;border-width:4px;"></span>
+      <p class="text-muted mt-1">Analysing document…</p>
+    </div>
+
+    <div id="errorSection" class="hidden"></div>
+
+    <div class="alert alert-warning mt-3">
+      ⚠️ Analysis results are for educational purposes only. Always consult a qualified legal
+      professional before taking action based on any document review.
+    </div>
+  </div>
+
+  <footer>
+    <p><strong style="color:var(--gold);">LegalMind-AI</strong> &mdash; Final Year Project &mdash; For educational purposes only.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Tab switching
+    function switchTab(tabName, btn) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById("tab-" + tabName).classList.add("active");
+      btn.classList.add("active");
+    }
+
+    // File upload setup
+    const fileInput = document.getElementById("fileInput");
+    const dropZone = document.getElementById("dropZone");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files.length > 0) {
+        const f = fileInput.files[0];
+        document.getElementById("fileInfo").textContent = `Selected: ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+        document.getElementById("fileInfo").classList.remove("hidden");
+        uploadBtn.disabled = false;
+      }
+    });
+
+    dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        fileInput.dispatchEvent(new Event("change"));
+      }
+    });
+
+    async function analyseText() {
+      const text = document.getElementById("docText").value.trim();
+      if (!text) { showError("Please paste some document text first."); return; }
+      const analysisType = document.getElementById("analysisType").value;
+
+      showLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/analyse-document`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ document_text: text, analysis_type: analysisType }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        displayResults(await res.json());
+      } catch (err) {
+        showError(`Analysis failed: ${escapeHtml(err.message)}`);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function uploadFile() {
+      if (!fileInput.files.length) { showError("Please select a file first."); return; }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      showLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/upload-document`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) throw new Error(await res.text());
+        displayResults(await res.json());
+      } catch (err) {
+        showError(`Upload failed: ${escapeHtml(err.message)}`);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById("docSummary").textContent = data.summary;
+
+      const renderList = (id, items, icon) => {
+        const ul = document.getElementById(id);
+        ul.innerHTML = items.length
+          ? items.map(i => `<li><span>${icon}</span>${escapeHtml(i)}</li>`).join("")
+          : `<li><span>—</span>None detected.</li>`;
+      };
+
+      renderList("keyPoints", data.key_points, "🔹");
+      renderList("riskFactors", data.risk_factors, "⚠️");
+      renderList("recommendations", data.recommendations, "✅");
+
+      document.getElementById("resultsSection").classList.remove("hidden");
+      document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth" });
+      hideError();
+    }
+
+    function showLoading(state) {
+      document.getElementById("loadingSection").classList.toggle("hidden", !state);
+      document.getElementById("resultsSection").classList.add("hidden");
+      hideError();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorSection");
+      el.innerHTML = `<div class="alert alert-danger mt-2">${msg}</div>`;
+      el.classList.remove("hidden");
+    }
+
+    function hideError() {
+      document.getElementById("errorSection").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>
