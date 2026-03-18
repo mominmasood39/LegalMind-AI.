@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Case Research — LegalMind-AI</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <span class="logo-icon">⚖️</span>
+      <div>
+        <div class="brand-text">LegalMind<span style="color:#fff">·AI</span></div>
+        <div class="brand-sub">Legal Intelligence</div>
+      </div>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="chat.html">Legal Q&amp;A</a></li>
+      <li><a href="analyse.html">Analyse</a></li>
+      <li><a href="research.html" class="active">Research</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-container">
+    <div class="page-header">
+      <h1>🔍 Case Research</h1>
+      <p>Identify legal principles, arguments, and related areas of law for any scenario.</p>
+    </div>
+
+    <!-- Research form -->
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <label for="researchQuery" style="font-weight:600;color:var(--navy);display:block;margin-bottom:0.4rem;">
+            Research query:
+          </label>
+          <input
+            type="text"
+            id="researchQuery"
+            placeholder="e.g. Employer dismissed me without notice — what are my rights?"
+            style="width:100%;padding:0.7rem 1rem;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;outline:none;"
+          />
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <label for="researchJurisdiction" style="font-weight:600;color:var(--navy);display:block;margin-bottom:0.4rem;">Jurisdiction:</label>
+            <select id="researchJurisdiction" style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+              <option value="general">General</option>
+              <option value="us">United States</option>
+              <option value="uk">United Kingdom</option>
+              <option value="eu">European Union</option>
+              <option value="pk">Pakistan</option>
+              <option value="ca">Canada</option>
+              <option value="au">Australia</option>
+            </select>
+          </div>
+          <div>
+            <label for="caseType" style="font-weight:600;color:var(--navy);display:block;margin-bottom:0.4rem;">Case type:</label>
+            <select id="caseType" style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+              <option value="all">All types</option>
+              <option value="contract">Contract</option>
+              <option value="tort">Tort</option>
+              <option value="employment">Employment</option>
+              <option value="property">Property</option>
+              <option value="criminal">Criminal</option>
+              <option value="family">Family</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick scenarios -->
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:0.85rem;color:var(--text-muted);">Scenarios:</span>
+          <button class="btn" style="padding:0.3rem 0.8rem;font-size:0.82rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);"
+            onclick="setQuery('Breach of employment contract')">Breach of employment contract</button>
+          <button class="btn" style="padding:0.3rem 0.8rem;font-size:0.82rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);"
+            onclick="setQuery('Neighbour dispute over property boundary')">Property boundary dispute</button>
+          <button class="btn" style="padding:0.3rem 0.8rem;font-size:0.82rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);"
+            onclick="setQuery('Personal injury claim after car accident')">Personal injury — car accident</button>
+        </div>
+
+        <button class="btn btn-primary" id="researchBtn" onclick="doResearch()" style="align-self:flex-start;">
+          🔍 Run Research
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingSection" class="hidden text-center mt-3">
+      <span class="spinner" style="width:32px;height:32px;border-width:4px;"></span>
+      <p class="text-muted mt-1">Researching…</p>
+    </div>
+
+    <!-- Error -->
+    <div id="errorSection" class="hidden"></div>
+
+    <!-- Results -->
+    <div id="resultsSection" class="hidden">
+      <div class="research-grid">
+        <div class="results-card">
+          <h3>📚 Relevant Legal Principles</h3>
+          <ul class="results-list key-points" id="principles"></ul>
+        </div>
+        <div class="results-card">
+          <h3>⚖️ Suggested Arguments</h3>
+          <ul class="results-list recommendations" id="arguments"></ul>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:1.5rem;">
+        <div class="results-card">
+          <h3>🗂 Related Areas of Law</h3>
+          <div id="relatedAreas" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;"></div>
+        </div>
+        <div class="results-card">
+          <h3>📝 Research Notes</h3>
+          <p id="researchNotes" style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning mt-3">
+      ⚠️ Research results are for educational purposes only. Always verify case law and
+      statutes with a qualified legal professional before relying on them in practice.
+    </div>
+  </div>
+
+  <footer>
+    <p><strong style="color:var(--gold);">LegalMind-AI</strong> &mdash; Final Year Project &mdash; For educational purposes only.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById("researchQuery").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") doResearch();
+    });
+
+    function setQuery(q) {
+      document.getElementById("researchQuery").value = q;
+      document.getElementById("researchQuery").focus();
+    }
+
+    async function doResearch() {
+      const query = document.getElementById("researchQuery").value.trim();
+      if (!query) { showError("Please enter a research query."); return; }
+
+      const jurisdiction = document.getElementById("researchJurisdiction").value;
+      const caseType = document.getElementById("caseType").value;
+      const btn = document.getElementById("researchBtn");
+
+      btn.disabled = true;
+      showLoading(true);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/case-research`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, jurisdiction, case_type: caseType }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        displayResults(await res.json());
+      } catch (err) {
+        showError(`Research failed: ${escapeHtml(err.message)}`);
+      } finally {
+        showLoading(false);
+        btn.disabled = false;
+      }
+    }
+
+    function displayResults(data) {
+      const renderList = (id, items, icon) => {
+        const ul = document.getElementById(id);
+        ul.innerHTML = items.length
+          ? items.map(i => `<li><span>${icon}</span>${escapeHtml(i)}</li>`).join("")
+          : `<li><span>—</span>None found.</li>`;
+      };
+
+      renderList("principles", data.relevant_principles, "📌");
+      renderList("arguments", data.suggested_arguments, "⚖️");
+
+      const relatedEl = document.getElementById("relatedAreas");
+      relatedEl.innerHTML = data.related_areas.length
+        ? data.related_areas.map(a =>
+            `<span style="background:#e8f4fd;color:#1565c0;padding:0.3rem 0.8rem;border-radius:16px;font-size:0.85rem;font-weight:600;">${escapeHtml(a)}</span>`
+          ).join("")
+        : "<span style='color:var(--text-muted);font-size:0.9rem;'>None specified.</span>";
+
+      document.getElementById("researchNotes").textContent = data.research_notes;
+
+      document.getElementById("resultsSection").classList.remove("hidden");
+      document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth" });
+      hideError();
+    }
+
+    function showLoading(state) {
+      document.getElementById("loadingSection").classList.toggle("hidden", !state);
+      document.getElementById("resultsSection").classList.add("hidden");
+      hideError();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorSection");
+      el.innerHTML = `<div class="alert alert-danger mt-2">${msg}</div>`;
+      el.classList.remove("hidden");
+    }
+
+    function hideError() {
+      document.getElementById("errorSection").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>

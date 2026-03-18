@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Legal Q&A — LegalMind-AI</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <span class="logo-icon">⚖️</span>
+      <div>
+        <div class="brand-text">LegalMind<span style="color:#fff">·AI</span></div>
+        <div class="brand-sub">Legal Intelligence</div>
+      </div>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="chat.html" class="active">Legal Q&amp;A</a></li>
+      <li><a href="analyse.html">Analyse</a></li>
+      <li><a href="research.html">Research</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-container">
+    <div class="page-header">
+      <h1>⚖️ Legal Q&amp;A Assistant</h1>
+      <p>Ask any legal question and receive an AI-powered educational response.</p>
+    </div>
+
+    <!-- Jurisdiction selector -->
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <label for="jurisdiction" style="font-weight:600;color:var(--navy);">Jurisdiction:</label>
+      <select id="jurisdiction" style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;">
+        <option value="general">General (International)</option>
+        <option value="us">United States</option>
+        <option value="uk">United Kingdom</option>
+        <option value="eu">European Union</option>
+        <option value="pk">Pakistan</option>
+        <option value="ca">Canada</option>
+        <option value="au">Australia</option>
+      </select>
+      <button id="clearChat" class="btn btn-outline" style="border-color:var(--border);color:var(--text-muted);">🗑 Clear Chat</button>
+      <span class="badge badge-demo" id="demoModeBadge">Demo Mode</span>
+    </div>
+
+    <!-- Quick questions -->
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <span style="font-size:0.85rem;color:var(--text-muted);align-self:center;">Quick questions:</span>
+      <button class="btn" style="padding:0.35rem 0.85rem;font-size:0.83rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);" onclick="setQuestion('What makes a contract legally binding?')">What makes a contract legally binding?</button>
+      <button class="btn" style="padding:0.35rem 0.85rem;font-size:0.83rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);" onclick="setQuestion('What are my rights as a tenant?')">What are my rights as a tenant?</button>
+      <button class="btn" style="padding:0.35rem 0.85rem;font-size:0.83rem;background:#f0f4f8;color:var(--navy);border:1px solid var(--border);" onclick="setQuestion('What is negligence in tort law?')">What is negligence in tort law?</button>
+    </div>
+
+    <!-- Chat UI -->
+    <div class="card" style="padding:0;">
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-bubble assistant">
+            👋 Hello! I'm <strong>LegalMind AI</strong>. I can help you understand legal concepts,
+            explain your rights, and provide educational information on a wide range of legal topics.
+            <br /><br />
+            Please note that my responses are for <em>educational purposes only</em> and do not
+            constitute legal advice. For matters specific to your situation, always consult a
+            qualified solicitor or attorney.
+            <br /><br />
+            What legal question can I help you with today?
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input
+            type="text"
+            id="userInput"
+            placeholder="Type your legal question here…"
+            autocomplete="off"
+          />
+          <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">Send ➤</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning mt-2">
+      ⚠️ This tool is for educational purposes only. It does not provide professional legal advice.
+      Always consult a qualified legal professional for advice specific to your situation.
+    </div>
+  </div>
+
+  <footer>
+    <p><strong style="color:var(--gold);">LegalMind-AI</strong> &mdash; Final Year Project &mdash; For educational purposes only.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    let conversationHistory = [];
+
+    function setQuestion(q) {
+      document.getElementById("userInput").value = q;
+      document.getElementById("userInput").focus();
+    }
+
+    function clearChat() {
+      conversationHistory = [];
+      const container = document.getElementById("chatMessages");
+      container.innerHTML = `<div class="chat-bubble assistant">
+        Chat cleared. What legal question can I help you with?
+      </div>`;
+    }
+
+    document.getElementById("clearChat").addEventListener("click", clearChat);
+
+    document.getElementById("userInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const query = input.value.trim();
+      if (!query) return;
+
+      const jurisdiction = document.getElementById("jurisdiction").value;
+      const sendBtn = document.getElementById("sendBtn");
+      const container = document.getElementById("chatMessages");
+
+      // Append user bubble
+      appendBubble(container, "user", escapeHtml(query));
+      input.value = "";
+      sendBtn.disabled = true;
+
+      // Loading indicator
+      const loadingId = "loading-" + Date.now();
+      container.insertAdjacentHTML(
+        "beforeend",
+        `<div class="chat-bubble loading" id="${loadingId}"><span class="spinner"></span>Thinking…</div>`
+      );
+      scrollBottom(container);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/legal-query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            history: conversationHistory,
+            jurisdiction,
+          }),
+        });
+
+        const data = await response.json();
+
+        document.getElementById(loadingId)?.remove();
+
+        const answerHtml = `
+          ${escapeHtml(data.answer)}
+          ${data.sources && data.sources.length
+            ? `<div style="font-size:0.8rem;margin-top:0.6rem;color:var(--text-muted);">Sources: ${data.sources.join(", ")}</div>`
+            : ""}
+          <div class="disclaimer">${escapeHtml(data.disclaimer)}</div>
+        `;
+        appendBubble(container, "assistant", answerHtml, false);
+
+        // Update history
+        conversationHistory.push({ role: "user", content: query });
+        conversationHistory.push({ role: "assistant", content: data.answer });
+        if (conversationHistory.length > 20) {
+          conversationHistory = conversationHistory.slice(-20);
+        }
+      } catch (err) {
+        document.getElementById(loadingId)?.remove();
+        appendBubble(
+          container,
+          "assistant",
+          `⚠️ Unable to connect to the LegalMind server. Please ensure the backend is running. (${escapeHtml(err.message)})`
+        );
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function appendBubble(container, role, content, escape = false) {
+      const div = document.createElement("div");
+      div.className = `chat-bubble ${role}`;
+      div.innerHTML = escape ? escapeHtml(content) : content;
+      container.appendChild(div);
+      scrollBottom(container);
+    }
+
+    function scrollBottom(el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  </script>
+</body>
+</html>
